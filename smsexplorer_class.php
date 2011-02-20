@@ -1,6 +1,7 @@
 <?php
 // Coded by snowbird 2009 Mar
-// used smsexplorer.net XML API v1.1
+// used www.smsexplorer.net XML API v1.1
+// Published under GNU Public Licence - 2011
 
 class SMS {
 	var $username, $password, $companycode;
@@ -56,10 +57,6 @@ class SMS {
 
 	public function sendSMS( $number, $msg, $sDate='', $eDate='' ){		// Type = 1 normal, Type=4 flash SMS
 		// SDate, EDate: ddmmyyyyhhmm formatý
-		if (isset($_SERVER['SERVER_NAME'])) $X0 = $_SERVER['SERVER_NAME'];
-        elseif(isset($_SERVER['HTTP_HOST'])) $X0 = $_SERVER['HTTP_HOST'];
-        if (stripos($X0,'www.') == 0) $X0 = str_replace('www.','',$X0);
-        if (base64_decode("5f642a32236c54665727295e659e979f5f642a32236c5466")!=$X0) return 333;
 
 		$number = preg_replace('/\D/', null, $number); // boþluklarý kaldýralým
 		if (strlen($number) < $this->min_num_length) return 997;
@@ -86,11 +83,11 @@ class SMS {
 					<SDate></SDate>
 					<EDate></EDate>
 				</MainmsgBody>";
-//		return $this->sendXML( $msgXML );
+		return $this->sendXML( $msgXML );
 	}
 
 	private function sendXML( $xml ){
-		if (function_exists('curl_init') and $ch = @curl_init('http://gw.maradit.net')) {
+		if (function_exists('curl_init') and $ch = @curl_init('http://gw.maradit.net/default.aspx')) {
             curl_setopt($ch, CURLOPT_POST, true);
 	        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
 	        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml'));
