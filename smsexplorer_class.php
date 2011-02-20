@@ -8,19 +8,19 @@ class SMS {
     var $originator;
     var $smsType = 1;
     var $min_num_length = 10;
-    var $msg_length_control = false;  // alttaki 2 değerin kontrolünü yapalımmı
+    var $msg_length_control = false;  // alttaki 2 deÄŸerin kontrolÃ¼nÃ¼ yapalÄ±mmÄ±
     var $msg_min_length = 2;
     var $msg_max_length = 160;
     var $msg_length;
 
 	public function __construct($uname,$pword,$ccode = 100) {
-		$this->username = $uname; // test için: devtest;
-		$this->password = $pword; // test için: devtest;
+		$this->username = $uname; // test iÃ§in: devtest;
+		$this->password = $pword; // test iÃ§in: devtest;
 		$this->companycode = $ccode;  // 100 sabit
     }
 
 	protected function removeTRChar( $input ){
-		//Türkçe karakterlerin çevrimi yapıp, büyük harfe çevrim işlemi		return strtoupper(strtr($input,'ğüşıöçĞÜŞİÖÇ','GUSIOCGUSIOC'));
+		//TÃ¼rkÃ§e karakterlerin Ã§evrimi yapÄ±p, bÃ¼yÃ¼k harfe Ã§evrim iÅŸlemi		return strtoupper(strtr($input,'ÄŸÃ¼ÅŸÄ±Ã¶Ã§ÄÃœÅÄ°Ã–Ã‡','GUSIOCGUSIOC'));
 	}
 
 	public function getCredit(){		$creditXML = "<MainReportRoot><Command>6</Command><PlatformID>1</PlatformID><UserName>$this->username</UserName><ChannelCode>$this->companycode</ChannelCode><PassWord>$this->password</PassWord></MainReportRoot>";
@@ -32,36 +32,36 @@ class SMS {
         return $this->sendXML( $reportXML );
     }
 
-	public function getReportbyDate( $sDate, $eDate ){		// sDate, eDate = ddmmyyyy  formatında olacak
+	public function getReportbyDate( $sDate, $eDate ){		// sDate, eDate = ddmmyyyy  formatÄ±nda olacak
 		$reportXML = "<MainReportRoot><Command>43</Command><PlatformID>1</PlatformID><UserName>$this->username</UserName><ChannelCode>$this->companycode</ChannelCode><PassWord>$this->password</PassWord><Sdate>$sDate</Sdate><Edate>$eDate</Edate></MainReportRoot>";
         return $this->sendXML( $reportXML );
 			/*
-			SMS Durumu  Açıklama
-			1  Operatöre teslim edildi
-			3  Başarılı olarak iletildi
-			5  İptal olan ya da GSM NO formatına uymayan numaralar
-			6  İşlemde olan ve gönderimi süren numaralar
-			9  Geçerlilik süresi boyunca iletilememiş ve zaman aşımına uğramış
+			SMS Durumu  AÃ§Ä±klama
+			1  OperatÃ¶re teslim edildi
+			3  BaÅŸarÄ±lÄ± olarak iletildi
+			5  Ä°ptal olan ya da GSM NO formatÄ±na uymayan numaralar
+			6  Ä°ÅŸlemde olan ve gÃ¶nderimi sÃ¼ren numaralar
+			9  GeÃ§erlilik sÃ¼resi boyunca iletilememiÅŸ ve zaman aÅŸÄ±mÄ±na uÄŸramÄ±ÅŸ
 
-			RAPORLAMA ESANSINDA DÖNEN HATA DEĞERLERİ
-			Hata Kodları   Açıklama
-			01  UserName/PassWord (Kullanıcı Adı/Parola) yanlış girilmiş
-			02  İstekte bulunan kullanıcıya(UserName) ait raporlanmak istenen ID bulunamadı
-			03  ID girilmemiş ya da genel bir hata oluştu
-			04  İşlem başarısız olmuş
-			05  Talep edilen ID şuanda işleniyor(Yazılıyor,Gönderiliyor ya da Filtreleniyor).
-			07  Telep edilen ID ye ait işlem (SMS gönderimi ) bulunamadı
-			08  İşlem (SMS gönderimi )kullanıcı tarafından iptal edilmiş
+			RAPORLAMA ESANSINDA DÃ–NEN HATA DEÄERLERÄ°
+			Hata KodlarÄ±   AÃ§Ä±klama
+			01  UserName/PassWord (KullanÄ±cÄ± AdÄ±/Parola) yanlÄ±ÅŸ girilmiÅŸ
+			02  Ä°stekte bulunan kullanÄ±cÄ±ya(UserName) ait raporlanmak istenen ID bulunamadÄ±
+			03  ID girilmemiÅŸ ya da genel bir hata oluÅŸtu
+			04  Ä°ÅŸlem baÅŸarÄ±sÄ±z olmuÅŸ
+			05  Talep edilen ID ÅŸuanda iÅŸleniyor(YazÄ±lÄ±yor,GÃ¶nderiliyor ya da Filtreleniyor).
+			07  Telep edilen ID ye ait iÅŸlem (SMS gÃ¶nderimi ) bulunamadÄ±
+			08  Ä°ÅŸlem (SMS gÃ¶nderimi )kullanÄ±cÄ± tarafÄ±ndan iptal edilmiÅŸ
 			*/
     }
 
 	public function sendSMS( $number, $msg, $sDate='', $eDate='' ){		// Type = 1 normal, Type=4 flash SMS
-		// SDate, EDate: ddmmyyyyhhmm formatı
+		// SDate, EDate: ddmmyyyyhhmm formatÄ±
 
-		$number = preg_replace('/\D/', null, $number); // boşlukları kaldıralım
+		$number = preg_replace('/\D/', null, $number); // boÅŸluklarÄ± kaldÄ±ralÄ±m
 		if (strlen($number) < $this->min_num_length) return 997;
 
-        // Mesajı Türkçe karakterden arındırp, tek satır hale getirelim
+        // MesajÄ± TÃ¼rkÃ§e karakterden arÄ±ndÄ±rp, tek satÄ±r hale getirelim
 		$msg = $this->removeTRChar( $msg );
         $msg = preg_replace('/[\r\n\t]+/', ' ', trim(strval( $msg )));
         $msg = preg_replace('/\s{2,}/', ' ', $msg);
@@ -97,9 +97,9 @@ class SMS {
 	        $result = curl_exec($ch);
 	        curl_close($ch);
 		}
-		else if (ini_get('allow_url_fopen')) { // eğer curl çalışmıyorsa bunu deneyelim
+		else if (ini_get('allow_url_fopen')) { // eÄŸer curl Ã§alÄ±ÅŸmÄ±yorsa bunu deneyelim
             if (!$fp = @fsockopen('gw.maradit.net', 80, $errno, $errstr)) {
-                    trigger_error('SMS gateway bağlantı hatası. Daha sonra tekrar deneyin', E_USER_ERROR);
+                    trigger_error('SMS gateway baÄŸlantÄ± hatasÄ±. Daha sonra tekrar deneyin', E_USER_ERROR);
                     return 20;
             }
 
@@ -126,28 +126,28 @@ class SMS {
         return ($result);
 
 /*
-		GÖNDERİM ESANSINDA DÖNEN DEĞERLER
-		Hata Kodları  Açıklama
-		01 UserName/PassWord (Kullanıcı Adı/Parola) yanlış girilmiş
-		02 Kredi yeterli değil
+		GÃ–NDERÄ°M ESANSINDA DÃ–NEN DEÄERLER
+		Hata KodlarÄ±  AÃ§Ä±klama
+		01 UserName/PassWord (KullanÄ±cÄ± AdÄ±/Parola) yanlÄ±ÅŸ girilmiÅŸ
+		02 Kredi yeterli deÄŸil
 		04 Bilinmeyen SMS tipi
-		05 Hatalı Gönderen ID (Originator) seçimi yapılmış
-		06 Mesaj metni ya da numaralar girilmemiş.
-		09 Hatalı tarih formatı , tarih ddmmyyyyhhmm (gün-ay-yıl-saat-dakika) formatında olmalıdır
+		05 HatalÄ± GÃ¶nderen ID (Originator) seÃ§imi yapÄ±lmÄ±ÅŸ
+		06 Mesaj metni ya da numaralar girilmemiÅŸ.
+		09 HatalÄ± tarih formatÄ± , tarih ddmmyyyyhhmm (gÃ¼n-ay-yÄ±l-saat-dakika) formatÄ±nda olmalÄ±dÄ±r
 
-		Mesaj başarılı ise “ID: 3152005” gibi bir dönüş
+		Mesaj baÅŸarÄ±lÄ± ise â€œID: 3152005â€ gibi bir dÃ¶nÃ¼ÅŸ
 
-		Hata Kodlari  Açıklama
+		Hata Kodlari  AÃ§Ä±klama
 		20 Bilinmeyen Hata.
-		21 XML ifadesi ya da formatı hatalı.
-		22 Kullanıcı aktif değil.
-		71 GSM prefixi sistemimizde tanımlı değil. (Ülke kodları 90 , 46, 41 gibi)
-		72 Gönderen Id tanımlı değil. (11 karakterlik gönderen başlığı)
-		74 Kullanıcı ya da kullanılan ip engellenmiş
+		21 XML ifadesi ya da formatÄ± hatalÄ±.
+		22 KullanÄ±cÄ± aktif deÄŸil.
+		71 GSM prefixi sistemimizde tanÄ±mlÄ± deÄŸil. (Ãœlke kodlarÄ± 90 , 46, 41 gibi)
+		72 GÃ¶nderen Id tanÄ±mlÄ± deÄŸil. (11 karakterlik gÃ¶nderen baÅŸlÄ±ÄŸÄ±)
+		74 KullanÄ±cÄ± ya da kullanÄ±lan ip engellenmiÅŸ
 
-		997 Gönderilen SMS numarası yanlış veya eksik. En az $sms->min_num_length rakam olmalı
-		998 Gönderilen SMS mesajı çok kısa. En az $sms->msg_min_length karakter olmalı
-		999 Gönderilen SMS mesajı çok uzun. İzin verilen maks $sms->msg_max_length karakter
+		997 GÃ¶nderilen SMS numarasÄ± yanlÄ±ÅŸ veya eksik. En az $sms->min_num_length rakam olmalÄ±
+		998 GÃ¶nderilen SMS mesajÄ± Ã§ok kÄ±sa. En az $sms->msg_min_length karakter olmalÄ±
+		999 GÃ¶nderilen SMS mesajÄ± Ã§ok uzun. Ä°zin verilen maks $sms->msg_max_length karakter
 */
 	}
 } //end class sms
@@ -157,14 +157,14 @@ class SMS {
 /*
 http://www.smsexplorer.com/Shared/Dev/XMLAPI/MARADIT_XML_API.pdf
 ---------------------------------------------------------------------------------
-<Command> Açıklama
-0   SMStomany ( Aynı mesajın birçok farlı numaraya gönderilmesi)
-1   SMSmultisenders (Farklı mesajların farklı numaralara gönderilmesi)
-43  Reportbydate (Tarihi değerlendirerek raporlama)
-3   ReportbyID ( SMS Id değerlendirilerek raporlama)
-4   Canceljop (İleri bir tarihe gönderilmiş SMS paketin iptali
+<Command> AÃ§Ä±klama
+0   SMStomany ( AynÄ± mesajÄ±n birÃ§ok farlÄ± numaraya gÃ¶nderilmesi)
+1   SMSmultisenders (FarklÄ± mesajlarÄ±n farklÄ± numaralara gÃ¶nderilmesi)
+43  Reportbydate (Tarihi deÄŸerlendirerek raporlama)
+3   ReportbyID ( SMS Id deÄŸerlendirilerek raporlama)
+4   Canceljop (Ä°leri bir tarihe gÃ¶nderilmiÅŸ SMS paketin iptali
 5   Checkdate (Sunucu tarihinin kontrol edilmesi)
-6   Getcredit (Gönderen ID ve kredinin kontrol edilmesi)
+6   Getcredit (GÃ¶nderen ID ve kredinin kontrol edilmesi)
 ---------------------------------------------------------------------------------
 */
 ?>
