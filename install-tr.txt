@@ -1,0 +1,170 @@
+SMS Gönderim Modülü v1.0
+Mart 2009 by Snowbird
+GPL Lisansý altýnda yayýnlanmýþtýr
+
+
+=====================================================
+Gereksinimler:
+- php 5.x
+- php edit etmek için bir editör
+=====================================================
+
+YAPILACAKLAR
+- Modül kullanýmýndan önce smsexplorer.net sitesine abone olunup sms kontör satýn alýnmalýdýr
+
+- smsexplorer.net 3 adet "originator" kaydýna izin verir. Yani karþý tarafta SMS gönderen olarak çýkacak isim veya numara 
+veya belirteç. Bunlarý siz seçiyorsunuz. 
+
+- oscommerce sitenizden SMS gönderen olarak belirteceðiniz originator bilgisini  support@oscommerce.tc  ye email gönderiyorsunuz 
+ve karþýlýðýnda sms class dosyasý (smsexplorer_class.php) bu bilgiye göre ayarlanýp þifrelenip size gönderilecek. Daha sonra originator deðiþikliði modülde düzenleme yapýlmasýný gerektirdiði için 10 TL ücret gerektirir.
+
+- Bu esnada aþaðýdaki gerekli deðiþiklikleri yapýnýz. 
+
+
+- Aþaðýdaki SQL sorguyu çalýþtýrýn:
+ALTER TABLE orders_status_history ADD column customer_smsed int (1) DEFAULT '0' NULL after customer_notified;
+
+
+
+- Bu paket içindeki smsexplorer_class.php  dosyasýný  /admin/includes/classes/  altýna kopyalayýn  (DÝkkat admin altýndaki folder)
+
+==============================================================================================
+/admin/orders.php  açýn
+==============================================================================================
+
+
+AÞAÐIDAKÝNÝ BULUN
+
+  require(DIR_WS_CLASSES . 'currencies.php');
+  $currencies = new currencies();
+
+HEMEN ALTINA ÞUNU EKLEYÝN (Deðerleri isteðinize göre deðiþtirin)
+
+  require(DIR_WS_CLASSES . 'smsexplorer_class.php');
+  $sms = new SMS("kullanýcýadýnýz","þifreniz");
+  $sms->originator = "originator"; //Originator bilginiz
+
+  $sms->smsType = 1; // 1= Normal sms, 4= Flash sms
+  $sms->min_num_length = 10;   // Min GSM no karakter sayýsý - varsayýlan: 10
+  $sms->msg_length_control = false; // alttaki 2 deðerin sýký sýkýya kontrol edilmesi için true yapýnýz
+  $sms->msg_min_length = 2;    // Girilmesi geren min karakter sayýsý - varsayýlan: 2
+  $sms->msg_max_length = 160;  // Girilmesi geren max karakter sayýsý - varsayýlan: 160
+
+-----------------------------------------------------------------------------------------
+Not: originator, kullanýcýadýnýz, þifre alanlarýný smsexplorer hesap bilgilerinize göre doldurun
+
+----------------------------------------------------------------------------------------------
+AÞAÐIDAKÝNÝ BULUN
+
+          <td><?php echo tep_draw_form('status', FILENAME_ORDERS, tep_get_all_get_params(array('action')) . 'action=update_order'); ?></td>
+
+
+AÞAÐIDAKÝ ÝLE DEÐÝÞTÝRÝN
+
+
+          <td><?php echo tep_draw_form('status', FILENAME_ORDERS, tep_get_all_get_params(array('action')) . 'action=update_order','post','onsubmit="return sms_kontrol();"'); ?></td>
+
+----------------------------------------------------------------------------------------------
+
+AÞAÐIDAKÝNÝ BULUN
+
+          $customer_notified = '0';
+
+HEMEN ALTINA ÞUNU EKLEYÝN
+
+// Snowbird SMS gönderim BAÞLAR
+          if (isset($HTTP_POST_VARS['notify_sms']) && ($HTTP_POST_VARS['notify_sms'] == 'on')) {
+             $gsm_no = preg_replace('/[^0-9]/', '', $HTTP_POST_VARS['notify_gsm']);
+             $mesaj = $oID.TEXT_SMS_HEADER.'['.$orders_status_array[$status].'] ';
+
+             if ($HTTP_POST_VARS['notify_comments'] == 'on') $mesaj .= $comments;
+
+             $sonuc = $sms->sendSMS($gsm_no, $mesaj);
+
+		switch ($sonuc) {
+			case  "01": $sms_sonucu = "Kullanýcý hesap bilgileri yanlýþ ($sonuc)"; $success = false; break;
+			case  "02": $sms_sonucu = "Kredi yeterli deðil ($sonuc)"; $success = false; break;
+			case  "04": $sms_sonucu = "Bilinmeyen SMS tipi ($sonuc)"; $success = false; break;
+			case  "05": $sms_sonucu = "Hatalý Gönderen ID (Originator) seçimi yapýlmýþ ($sonuc)"; $success = false; break;
+			case  "06": $sms_sonucu = "Mesaj metni ya da numaralar girilmemiþ ($sonuc)"; $success = false; break;
+			case  "20": $sms_sonucu = "Bilinmeyen hata ($sonuc)"; $success = false; break;
+			case  "22": $sms_sonucu = "Kullanýcý aktif deðil ($sonuc)"; $success = false; break;
+			case  "71": $sms_sonucu = "GSM prefixi sistemimizde tanýmlý deðil. (Ülke kodlarý 90 , 46, 41 gibi) ($sonuc)"; $success = false; break;
+			case  "72": $sms_sonucu = "Gönderen Id tanýmlý deðil ($sonuc)"; $success = false; break;
+			case  "74": $sms_sonucu = "Kullanýcý ya da kullanýlan ip engellenmiþ ($sonuc)"; $success = false; break;
+			case "997": $sms_sonucu = "Gönderilen SMS numarasý yanlýþ veya eksik. En az $sms->min_num_length rakam olmalý "; $success = false; break;
+			case "998": $sms_sonucu = "Gönderilen SMS çok kýsa. En az $sms->msg_min_length karakter olmalý"; $success = false; break;
+			case "999": $sms_sonucu = "Gönderilen SMS çok uzun ($sms->msg_length). Ýzin verilen maks $sms->msg_max_length karakter"; $success = false; break;
+			default:    $sms_sonucu = "Sipariþ güncelleme SMS gönderimi baþarýlý ($sonuc)"; $success = true;
+			} // end switch
+		 if($success == true) {
+		 	$messageStack->add_session(SUCCESS_ORDER_SMS_SENT.$sms_sonucu, 'success');
+		 	$customer_smsed = 1;
+		 } else {
+		 	$messageStack->add_session(WARNING_ORDER_SMS_SENT.$sms_sonucu, 'warning');
+		 	$customer_smsed = 0;
+		 	}
+          }  // end if
+// Snowbird SMS gönderim BÝTER
+
+----------------------------------------------------------------------------------------------
+
+AÞAÐIDAKÝNÝ BULUN
+
+tep_db_query("insert into " . TABLE_ORDERS_STATUS_HISTORY . " (orders_id, orders_status_id, date_added, customer_notified, comments) values ('" . (int)$oID . "', '" . tep_db_input($status) . "', now(), '" . tep_db_input($customer_notified) . "', '" . tep_db_input($comments) . $HTTP_POST_VARS['comments_sms'] ."')");
+
+AÞAÐIDAKÝ ÝLE DEÐÝÞTÝRÝN
+
+tep_db_query("insert into " . TABLE_ORDERS_STATUS_HISTORY . " (orders_id, orders_status_id, date_added, customer_notified, customer_smsed, comments) values ('" . (int)$oID . "', '" . tep_db_input($status) . "', now(), '" . tep_db_input($customer_notified) . "', '" . tep_db_input($customer_smsed) . "', '" . tep_db_input($comments) ."')");
+
+----------------------------------------------------------------------------------------------
+AÞAÐIDAKÝNÝ BULUN
+
+    <td class="dataTableHeadingContent" align="center"><?php echo TABLE_HEADING_CUSTOMER_NOTIFIED; ?></td>
+
+HEMEN ALTINA ÞUNU EKLEYÝN
+
+    <td class="dataTableHeadingContent" align="center"><?php echo TABLE_HEADING_CUSTOMER_NOTIFIED_SMS; ?></td>
+
+----------------------------------------------------------------------------------------------
+AÞAÐIDAKÝNÝ BULUN
+
+    if ($orders_history['customer_notified'] == '1') {
+      echo tep_image(DIR_WS_ICONS . 'tick.gif', ICON_TICK) . "</td>\n";
+    } else {
+      echo tep_image(DIR_WS_ICONS . 'cross.gif', ICON_CROSS) . "</td>\n";
+    }
+
+HEMEN ALTINA ÞUNU EKLEYÝN
+
+    echo '    <td class="secondheader" align="center">';    
+    if ($orders_history['customer_smsed'] == '1') {
+      echo tep_image(DIR_WS_ICONS . 'tick.gif', ICON_TICK) . "</td>\n";
+    } else {
+      echo tep_image(DIR_WS_ICONS . 'cross.gif', ICON_CROSS) . "</td>\n";
+    } 
+----------------------------------------------------------------------------------------------
+
+AÞAÐIDAKÝNÝ BULUN
+
+              <tr>
+                <td class="main"><b><?php echo ENTRY_NOTIFY_CUSTOMER; ?></b> <?php echo tep_draw_checkbox_field('notify', '', true); ?></td>
+                <td class="main"><b><?php echo ENTRY_NOTIFY_COMMENTS; ?></b> <?php echo tep_draw_checkbox_field('notify_comments', '', true); ?></td>
+              </tr>
+
+HEMEN ALTINA ÞUNU EKLEYÝN  (VEYA ÜSTÜNE.. O BÖLÜMDE GÖRÜNÜÞÜ ARTIK NASIL ÝSTERSENÝZ)
+
+              <tr>
+		<td class="main" align="right"><?php echo tep_draw_input_field('notify_gsm', preg_replace('/[^0-9]/', '',$order->customer['gsm'])).'&nbsp;'.tep_draw_checkbox_field('notify_sms', '', false); ?></td>
+              </tr>
+
+
+==================================================================
+/admin/includes/languages/turkish/orders.php
+==================================================================
+AÞAÐIDAKÝNÝ EKLEYÝN:
+
+define('ENTRY_NOTIFY_CUSTOMER_SMS', 'SMS Bildirimi:');
+define('TEXT_SMS_HEADER', STORE_NAME . ' %s NOLU SIPARISINIZIN DURUMU:');  // SMS MESAJIN GÝRÝÞÝ. BUNU DEÐÝÞTÝREBÝLÝRSÝNÝZ
+define('SUCCESS_ORDER_SMS_SENT', 'Baþarýlý: Sipariþ güncelleme SMS gönderimi baþarýlý.');
+define('TABLE_HEADING_CUSTOMER_NOTIFIED_SMS', 'SMS');
